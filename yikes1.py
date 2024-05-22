@@ -3,13 +3,19 @@ import pandas as pd
 
 def load_and_clean_data(file):
     # Attempt to load data, skip rows that do not match the expected format
-    for i in range(5):
+    data = None
+    for i in range(10):
         try:
             data = pd.read_csv(file, skiprows=i)
+            if data.empty:
+                continue
             if 'Player position' in data.columns[0]:
                 break
-        except pd.errors.ParserError:
+        except pd.errors.EmptyDataError:
             continue
+    if data is None or data.empty:
+        st.error(f"Failed to load data from {file.name}. The file may be empty or not contain the expected data.")
+        return None
 
     # Rename columns for better understanding
     data.columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
@@ -110,6 +116,8 @@ def calculate_speed_and_direction(data):
 
 def process_file(file):
     data_cleaned = load_and_clean_data(file)
+    if data_cleaned is None:
+        return None, None
     
     approach_distances = calculate_approach_distances(data_cleaned)
     approach_df = pd.DataFrame({
@@ -131,6 +139,10 @@ if uploaded_files:
     for uploaded_file in uploaded_files:
         st.write(f"Processing file: {uploaded_file.name}")
         approach_df, speed_df = process_file(uploaded_file)
+        
+        if approach_df is None or speed_df is None:
+            st.error(f"Failed to process file: {uploaded_file.name}")
+            continue
         
         st.write("Approach Distance Analysis:")
         st.write(approach_df.groupby('ImageType').describe())
