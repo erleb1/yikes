@@ -28,11 +28,11 @@ def load_and_clean_data(uploaded_file):
             valid_lines.append(decoded_line)
     
     # Create a DataFrame from the valid lines
-    try:
-        data = pd.read_csv(StringIO('\n'.join(valid_lines)))
-    except pd.errors.ParserError as e:
-        st.error(f"Error parsing {uploaded_file.name}: {e}")
+    if not valid_lines:
+        st.error(f"No valid data found in {uploaded_file.name}.")
         return None
+
+    data = pd.read_csv(StringIO('\n'.join(valid_lines)), error_bad_lines=False)
 
     expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
                         'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
