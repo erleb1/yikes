@@ -129,28 +129,31 @@ def update_approach_distances(approach_distances, merged_data, i, previous_direc
         else:
             approach_distances['Neutral'].append(previous_position)
 
-def calculate_speed_and_direction(data, merged_data):  # Accept merged_data as an argument
-    if merged_data is None:  # Check if merged_data is valid
-        return pd.DataFrame()  # Return an empty DataFrame
+def calculate_speed_and_direction(data, merged_data):
+    if merged_data is None:
+        return pd.DataFrame()
+
+    speeds = []
+    directions = []
+    image_types = []
 
     for i in range(1, len(merged_data)):
-        # ... (calculations for current_time, previous_time, current_position, previous_position)
+        current_time = merged_data.iloc[i]['TimeStamp']
+        previous_time = merged_data.iloc[i - 1]['TimeStamp']
+        current_position = merged_data.iloc[i]['Position']
+        previous_position = merged_data.iloc[i - 1]['Position']
 
         speed = calculate_speed(current_position, previous_position, current_time, previous_time)
-        
-        # Skip rows with invalid speed calculations
         if speed is None:
-            continue 
+            continue
 
         direction, image_type = determine_movement(merged_data, i, current_position, previous_position)
-        
-        # Only append if speed is valid
+
         speeds.append(speed)
         directions.append(direction)
         image_types.append(image_type)
 
-    results = pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
-    return results
+    return pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
 
 
 def calculate_speed(current_position, previous_position, current_time, previous_time):
@@ -168,6 +171,17 @@ def process_file(uploaded_file):
     data_cleaned = load_and_clean_data(uploaded_file)
     if data_cleaned is None:
         return None, None
+
+    approach_distances = calculate_approach_distances(data_cleaned)
+    player_positions = extract_player_positions(data_cleaned)
+    images_data = extract_images_data(data_cleaned)
+    merged_data = merge_data(player_positions, images_data) # Pass merged_data here
+    speed_df = calculate_speed_and_direction(data_cleaned, merged_data)
+
+    # ... (rest of your Streamlit code to display results)
+
+    return approach_distances, speed_df # You likely want to return both
+
 
 def calculate_speed_and_direction(data, merged_data):  # Accept merged_data as an argument
     if merged_data is None:  # Check if merged_data is valid
