@@ -5,7 +5,7 @@ from io import StringIO
 def load_and_clean_data(uploaded_file):
     uploaded_file.seek(0)
     lines = uploaded_file.readlines()
-    
+
     # Find the start line with 'Player position'
     start_line = 0
     found_header = False
@@ -33,7 +33,7 @@ def load_and_clean_data(uploaded_file):
         return None
 
     try:
-        data = pd.read_csv(StringIO('\n'.join(valid_lines)))
+        data = pd.read_csv(StringIO('\n'.join(valid_lines)), error_bad_lines=False)
     except pd.errors.ParserError as e:
         st.error(f"Error parsing {uploaded_file.name}: {e}")
         return None
