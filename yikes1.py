@@ -3,7 +3,6 @@ import pandas as pd
 from io import StringIO
 
 def load_and_clean_data(uploaded_file):
-    # Read file content to find the correct header
     uploaded_file.seek(0)
     lines = uploaded_file.readlines()
     
@@ -20,14 +19,20 @@ def load_and_clean_data(uploaded_file):
         st.error(f"Failed to find the header in {uploaded_file.name}. The file does not contain the expected data.")
         return None
 
-    # Read the file from the identified start line, skipping lines with incorrect number of fields
+    # Prepare valid lines by skipping lines with incorrect number of fields
     valid_lines = []
-    expected_fields = 3  # Set this to the minimum number of expected fields
+    expected_fields = 3  # Adjust this based on the actual minimum number of expected fields
     for line in lines[start_line:]:
-        if len(line.decode('utf-8').split(',')) >= expected_fields:
-            valid_lines.append(line.decode('utf-8'))
-
-    data = pd.read_csv(StringIO(''.join(valid_lines)))
+        decoded_line = line.decode('utf-8').strip()
+        if len(decoded_line.split(',')) >= expected_fields:
+            valid_lines.append(decoded_line)
+    
+    # Create a DataFrame from the valid lines
+    try:
+        data = pd.read_csv(StringIO('\n'.join(valid_lines)))
+    except pd.errors.ParserError as e:
+        st.error(f"Error parsing {uploaded_file.name}: {e}")
+        return None
 
     expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
                         'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
