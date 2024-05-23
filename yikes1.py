@@ -1,12 +1,22 @@
 import streamlit as st
 import pandas as pd
 from io import StringIO
+import chardet
 
 
 
 
 
 def load_and_clean_data(uploaded_file):
+    try:
+        # 1. Detect Encoding:
+        rawdata = uploaded_file.read()
+        result = chardet.detect(rawdata)
+        encoding = result['encoding']
+
+        # 2. Read CSV with Detected Encoding:
+        df = pd.read_csv(StringIO(rawdata.decode(encoding)), on_bad_lines='skip')
+
     try:
         # Read the file and find the header row
         df = pd.read_csv(uploaded_file, on_bad_lines='skip')
@@ -31,6 +41,13 @@ def load_and_clean_data(uploaded_file):
         st.write(df)  
         return df
 
+    except UnicodeDecodeError:
+        st.error(f"Failed to decode file {uploaded_file.name}. It might be corrupted or not a valid CSV.")
+        return None
+    except (IndexError, pd.errors.EmptyDataError) as e:
+        st.error(f"Error processing file {uploaded_file.name}: {e}")
+        return None  # Return None on error
+
     except IndexError:
         st.error(f"Failed to find the header ('Player position') in {uploaded_file.name}.")
         return None
@@ -45,14 +62,14 @@ def load_and_clean_data(uploaded_file):
 
 def find_header_start(lines):
     for i, line in enumerate(lines):
-        if 'Player position' in line.decode('Windows-1252'):
+        if 'Player position' in line.decode('UTF-8'):
             return i
     return None
 
 def extract_valid_lines(lines, expected_fields=3):
     valid_lines = []
     for line in lines:
-        decoded_line = line.decode('Windows-1252').strip()
+        decoded_line = line.decode('UTF-8').strip()
         if len(decoded_line.split(',')) >= expected_fields:
             valid_lines.append(decoded_line)
     return valid_lines
