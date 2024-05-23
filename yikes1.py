@@ -139,7 +139,8 @@ def calculate_speed_and_direction(data):
         directions.append(direction)
         image_types.append(image_type)
 
-    return pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
+    results = pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
+    return results
 
 def calculate_speed(current_position, previous_position, current_time, previous_time):
     time_diff = current_time - previous_time
@@ -162,6 +163,10 @@ def process_file(uploaded_file):
                                 'ImageType': ['Spider'] * len(approach_distances['Spider']) + ['Neutral'] * len(approach_distances['Neutral'])})
 
     speed_df = calculate_speed_and_direction(data_cleaned)
+
+    st.write("Debug: Columns in speed_df:", speed_df.columns)
+    st.write("Debug: Head of speed_df:", speed_df.head())
+
     return approach_df, speed_df
 
 st.title("Approach Distances and Speed Analysis")
