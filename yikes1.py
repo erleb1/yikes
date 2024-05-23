@@ -100,17 +100,26 @@ def extract_images_data(data):
     return images_data
 
 def merge_data(player_positions, images_data):
+    st.write("Debug: Player positions columns:", player_positions.columns)  # Debugging line
+    st.write("Debug: Images data columns:", images_data.columns)           # Debugging line
+
     try:
         # Check if Detail1 exists before using it
         if 'Detail1' in images_data.columns:
             merged_data = pd.merge_asof(
-                player_positions.sort_values('TimeStamp'), 
+                player_positions.sort_values('TimeStamp'),
                 images_data.sort_values('TimeStamp'),
                 on='TimeStamp', direction='backward', suffixes=('', '_image')
             )
             merged_data['RightImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
             merged_data['LeftImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
-            return merged_data
+
+            # Check if the merge was successful
+            if merged_data.empty:
+                st.error("Merged data is empty after merge_asof!")
+                return None
+            else:
+                return merged_data
         else:
             st.warning("The column 'Detail1' is missing from the images data in some files. These files will be excluded from the analysis.")
             return None
@@ -118,7 +127,6 @@ def merge_data(player_positions, images_data):
     except Exception as e:
         st.error(f"Error merging data: {e}")
         return None
-
 
 def determine_direction(current_position, previous_position):
     return 'Right' if current_position > previous_position else 'Left'
