@@ -3,7 +3,7 @@ import pandas as pd
 from io import StringIO
 
 def load_and_clean_data(uploaded_file):
-    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252']
+    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'cp1251']
     for encoding in encodings:
         try:
             rawdata = uploaded_file.read()
