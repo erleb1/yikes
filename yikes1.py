@@ -50,6 +50,7 @@ def create_dataframe(valid_lines):
         return None
 
 def clean_data(data):
+    st.write("Debug: Original Columns:", data.columns)
     expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
                         'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
     column_count = len(data.columns)
@@ -89,6 +90,7 @@ def extract_images_data(data):
     right_image_data = event_executed_data[event_executed_data['EventData'] == 'RightImage']
     left_image_data = event_executed_data[event_executed_data['EventData'] == 'LeftImage']
     images_data = pd.concat([right_image_data, left_image_data]).sort_values(by='TimeStamp')
+    st.write("Debug: Images Data Columns:", images_data.columns)
     return images_data
 
 def merge_data(player_positions, images_data):
