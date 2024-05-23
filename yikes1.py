@@ -4,6 +4,8 @@ import csv
 
 def load_and_clean_data(file):
     data = None
+    expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
+                        'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
     try:
         for i in range(10):
             try:
@@ -22,8 +24,9 @@ def load_and_clean_data(file):
         st.error(f"Failed to load data from {file.name}. The file may be empty or not contain the expected data.")
         return None
 
-    data.columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
-                    'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
+    # Dynamically adjust column renaming
+    column_count = len(data.columns)
+    data.columns = expected_columns[:column_count]
     data_cleaned = data.dropna(axis=1, how='all')
     return data_cleaned
 
