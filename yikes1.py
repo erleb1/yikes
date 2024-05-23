@@ -93,6 +93,9 @@ def extract_images_data(data):
 
 def merge_data(player_positions, images_data):
     try:
+        if 'Detail1' not in images_data.columns:
+            st.error("The column 'Detail1' is missing from the images data.")
+            return None
         merged_data = pd.merge_asof(player_positions.sort_values('TimeStamp'), images_data.sort_values('TimeStamp'),
                                     on='TimeStamp', direction='backward', suffixes=('', '_image'))
         merged_data['RightImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
