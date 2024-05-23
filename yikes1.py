@@ -17,13 +17,7 @@ def load_and_clean_data(uploaded_file):
         # 2. Read CSV with Detected Encoding:
         df = pd.read_csv(StringIO(rawdata.decode(encoding)), on_bad_lines='skip')
 
-    try:
         # Read the file and find the header row
-        df = pd.read_csv(uploaded_file, on_bad_lines='skip')
-
-        # Strip leading and trailing whitespace from the first column
-        df.iloc[:, 0] = df.iloc[:, 0].astype(str).str.strip()
-
         header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
         df = df.iloc[header_row:].copy()  # Keep only data from header row onward
 
@@ -31,29 +25,22 @@ def load_and_clean_data(uploaded_file):
         df = df.dropna(axis=1, how='all')
 
         # Standardize column names
-        expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
-                             'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
+        expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4',
+                            'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
         column_count = len(df.columns)  # Adjust columns based on actual data
-        df.columns = expected_columns[:column_count] 
+        df.columns = expected_columns[:column_count]
 
-        # Data Validation 
+        # Data Validation
         st.write("Data after cleaning:")
-        st.write(df)  
+        st.write(df)
         return df
+    
+    #Combined all the exceptions in one block
 
-    except UnicodeDecodeError:
-        st.error(f"Failed to decode file {uploaded_file.name}. It might be corrupted or not a valid CSV.")
-        return None
-    except (IndexError, pd.errors.EmptyDataError) as e:
+    except (UnicodeDecodeError, IndexError, pd.errors.EmptyDataError, Exception) as e:
         st.error(f"Error processing file {uploaded_file.name}: {e}")
         return None  # Return None on error
 
-    except IndexError:
-        st.error(f"Failed to find the header ('Player position') in {uploaded_file.name}.")
-        return None
-    except Exception as e:
-        st.error(f"Unexpected error while processing {uploaded_file.name}: {e}")
-        return None
 
 
 
