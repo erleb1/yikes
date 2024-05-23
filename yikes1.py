@@ -44,7 +44,7 @@ def extract_valid_lines(lines, expected_fields=3):
 
 def create_dataframe(valid_lines):
     try:
-        return pd.read_csv(StringIO('\n'.join(valid_lines)), error_bad_lines=False)
+        return pd.read_csv(StringIO('\n'.join(valid_lines)), on_bad_lines='skip')
     except pd.errors.ParserError as e:
         st.error(f"Error parsing the data: {e}")
         return None
