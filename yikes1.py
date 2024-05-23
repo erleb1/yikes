@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 from io import StringIO
 
-import streamlit as st
-import pandas as pd
-from io import StringIO
 
 
 
@@ -48,14 +45,14 @@ def load_and_clean_data(uploaded_file):
 
 def find_header_start(lines):
     for i, line in enumerate(lines):
-        if 'Player position' in line.decode('utf-8'):
+        if 'Player position' in line.decode('Windows-1252'):
             return i
     return None
 
 def extract_valid_lines(lines, expected_fields=3):
     valid_lines = []
     for line in lines:
-        decoded_line = line.decode('utf-8').strip()
+        decoded_line = line.decode('Windows-1252').strip()
         if len(decoded_line.split(',')) >= expected_fields:
             valid_lines.append(decoded_line)
     return valid_lines
