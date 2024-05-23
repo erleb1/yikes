@@ -3,38 +3,36 @@ import pandas as pd
 from io import StringIO
 
 def load_and_clean_data(uploaded_file):
-    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'cp1251']
-    for encoding in encodings:
-        try:
-            rawdata = uploaded_file.read()
-            decoded_data = rawdata.decode(encoding)
-            df = pd.read_csv(StringIO(decoded_data), on_bad_lines='skip')
+    try:
+        rawdata = uploaded_file.read()
+        decoded_data = rawdata.decode('utf-8')
+        df = pd.read_csv(StringIO(decoded_data), on_bad_lines='skip')
 
-            # Find the header row
-            if 'Player position' in df.iloc[:, 0].values:
-                header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
-                df = df.iloc[header_row:].copy()  # Keep only data from header row onward
+        # Find the header row
+        if 'Player position' in df.iloc[:, 0].values:
+            header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
+            df = df.iloc[header_row:].copy()  # Keep only data from header row onward
 
-                # Drop columns with all missing values (NaN)
-                df = df.dropna(axis=1, how='all')
+            # Drop columns with all missing values (NaN)
+            df = df.dropna(axis=1, how='all')
 
-                # Standardize column names
-                expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4',
-                                    'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
-                column_count = len(df.columns)  # Adjust columns based on actual data
-                df.columns = expected_columns[:column_count]
+            # Standardize column names
+            expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4',
+                                'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
+            column_count = len(df.columns)  # Adjust columns based on actual data
+            df.columns = expected_columns[:column_count]
 
-                # Data validation
-                st.write("Data after cleaning:")
-                st.write(df)
-                return df
-            else:
-                st.warning(f"'Player position' not found in the first column using encoding: {encoding}")
+            # Data validation
+            st.write("Data after cleaning:")
+            st.write(df)
+            return df
+        else:
+            st.warning(f"'Player position' not found in the first column")
 
-        except (UnicodeDecodeError, pd.errors.EmptyDataError, IndexError) as e:
-            st.warning(f"Trying next encoding due to error: {e}")
+    except (UnicodeDecodeError, pd.errors.EmptyDataError, IndexError) as e:
+        st.error(f"Error processing file {uploaded_file.name}: {e}")
 
-    st.error(f"Failed to decode file {uploaded_file.name} with common encodings.")
+    st.error(f"Failed to decode file {uploaded_file.name}.")
     return None
     
 def calculate_approach_distances(data):
@@ -168,6 +166,7 @@ def process_file(uploaded_file):
 
     return approach_distances, speed_df
 
+# Streamlit app setup
 st.title("Approach Distances and Speed Analysis")
 
 with st.form("upload_form"):
