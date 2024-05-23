@@ -36,7 +36,7 @@ def load_and_clean_data(uploaded_file):
 
     st.error(f"Failed to decode file {uploaded_file.name} with common encodings.")
     return None
-
+    
 def calculate_approach_distances(data):
     player_positions = extract_player_positions(data)
     images_data = extract_images_data(data)
