@@ -11,22 +11,26 @@ def load_and_clean_data(uploaded_file):
             df = pd.read_csv(StringIO(decoded_data), on_bad_lines='skip')
 
             # Find the header row
-            header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
-            df = df.iloc[header_row:].copy()  # Keep only data from header row onward
+            if 'Player position' in df.iloc[:, 0].values:
+                header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
+                df = df.iloc[header_row:].copy()  # Keep only data from header row onward
 
-            # Drop columns with all missing values (NaN)
-            df = df.dropna(axis=1, how='all')
+                # Drop columns with all missing values (NaN)
+                df = df.dropna(axis=1, how='all')
 
-            # Standardize column names
-            expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4',
-                                'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
-            column_count = len(df.columns)  # Adjust columns based on actual data
-            df.columns = expected_columns[:column_count]
+                # Standardize column names
+                expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4',
+                                    'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
+                column_count = len(df.columns)  # Adjust columns based on actual data
+                df.columns = expected_columns[:column_count]
 
-            # Data validation
-            st.write("Data after cleaning:")
-            st.write(df)
-            return df
+                # Data validation
+                st.write("Data after cleaning:")
+                st.write(df)
+                return df
+            else:
+                st.warning(f"'Player position' not found in the first column using encoding: {encoding}")
+
         except (UnicodeDecodeError, pd.errors.EmptyDataError, IndexError) as e:
             st.warning(f"Trying next encoding due to error: {e}")
 
