@@ -65,7 +65,7 @@ def calculate_approach_distances(data):
 
     merged_data = merge_data(player_positions, images_data)
     if merged_data is None:
-        return approach_distances
+         return approach_distances, merged_data 
 
     previous_position, previous_direction = None, None
     for i in range(1, len(merged_data)):
@@ -129,8 +129,9 @@ def update_approach_distances(approach_distances, merged_data, i, previous_direc
         else:
             approach_distances['Neutral'].append(previous_position)
 
-def calculate_speed_and_direction(data):
-    # ... (rest of the code is the same)
+def calculate_speed_and_direction(data, merged_data):  # Accept merged_data as an argument
+    if merged_data is None:  # Check if merged_data is valid
+        return pd.DataFrame()  # Return an empty DataFrame
 
     for i in range(1, len(merged_data)):
         # ... (calculations for current_time, previous_time, current_position, previous_position)
@@ -168,11 +169,9 @@ def process_file(uploaded_file):
     if data_cleaned is None:
         return None, None
 
-    approach_distances = calculate_approach_distances(data_cleaned)
-    approach_df = pd.DataFrame({'Distance': approach_distances['Spider'] + approach_distances['Neutral'],
-                                'ImageType': ['Spider'] * len(approach_distances['Spider']) + ['Neutral'] * len(approach_distances['Neutral'])})
-
-    speed_df = calculate_speed_and_direction(data_cleaned)
+def calculate_speed_and_direction(data, merged_data):  # Accept merged_data as an argument
+    if merged_data is None:  # Check if merged_data is valid
+        return pd.DataFrame()  # Return an empty DataFrame
 
     st.write("Debug: Columns in speed_df:", speed_df.columns)
     st.write("Debug: Head of speed_df:", speed_df.head())
