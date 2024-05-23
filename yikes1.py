@@ -3,21 +3,18 @@ import pandas as pd
 from io import StringIO
 import chardet
 
-
-
-
-
 def load_and_clean_data(uploaded_file):
     try:
-        # 1. Detect Encoding:
+        # Detect encoding
         rawdata = uploaded_file.read()
         result = chardet.detect(rawdata)
         encoding = result['encoding']
 
-        # 2. Read CSV with Detected Encoding:
-        df = pd.read_csv(StringIO(rawdata.decode(encoding)), on_bad_lines='skip')
+        # Read CSV with detected encoding
+        decoded_data = rawdata.decode(encoding)
+        df = pd.read_csv(StringIO(decoded_data), on_bad_lines='skip')
 
-        # Read the file and find the header row
+        # Find the header row
         header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
         df = df.iloc[header_row:].copy()  # Keep only data from header row onward
 
@@ -30,52 +27,14 @@ def load_and_clean_data(uploaded_file):
         column_count = len(df.columns)  # Adjust columns based on actual data
         df.columns = expected_columns[:column_count]
 
-        # Data Validation
+        # Data validation
         st.write("Data after cleaning:")
         st.write(df)
         return df
-    
-    #Combined all the exceptions in one block
 
     except (UnicodeDecodeError, IndexError, pd.errors.EmptyDataError, Exception) as e:
         st.error(f"Error processing file {uploaded_file.name}: {e}")
         return None  # Return None on error
-
-
-
-
-
-
-
-def find_header_start(lines):
-    for i, line in enumerate(lines):
-        if 'Player position' in line.decode('UTF-8'):
-            return i
-    return None
-
-def extract_valid_lines(lines, expected_fields=3):
-    valid_lines = []
-    for line in lines:
-        decoded_line = line.decode('UTF-8').strip()
-        if len(decoded_line.split(',')) >= expected_fields:
-            valid_lines.append(decoded_line)
-    return valid_lines
-
-def create_dataframe(valid_lines):
-    try:
-        return pd.read_csv(StringIO('\n'.join(valid_lines)), on_bad_lines='skip')
-    except pd.errors.ParserError as e:
-        st.error(f"Error parsing the data: {e}")
-        return None
-
-def clean_data(data):
-    st.write("Debug: Original Columns:", data.columns)
-    expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
-                        'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
-    column_count = len(data.columns)
-    data.columns = expected_columns[:column_count]
-    data_cleaned = data.dropna(axis=1, how='all')
-    return data_cleaned
 
 def calculate_approach_distances(data):
     player_positions = extract_player_positions(data)
@@ -103,7 +62,7 @@ def calculate_approach_distances(data):
         previous_position = current_position
 
     return pd.DataFrame(approach_data)  # Return a DataFrame
-    
+
 def extract_player_positions(data):
     player_positions = data[data['EventType'] == 'Player position']
     player_positions = player_positions[['TimeStamp', 'EventData']].rename(columns={'EventData': 'Position'})
@@ -123,7 +82,6 @@ def merge_data(player_positions, images_data):
     st.write("Debug: Images data columns:", images_data.columns)           # Debugging line
 
     try:
-        # Check if Detail1 exists before using it
         if 'Detail1' in images_data.columns:
             merged_data = pd.merge_asof(
                 player_positions.sort_values('TimeStamp'),
@@ -133,7 +91,6 @@ def merge_data(player_positions, images_data):
             merged_data['RightImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
             merged_data['LeftImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
 
-            # Check if the merge was successful
             if merged_data.empty:
                 st.error("Merged data is empty after merge_asof!")
                 return None
@@ -150,20 +107,6 @@ def merge_data(player_positions, images_data):
 def determine_direction(current_position, previous_position):
     return 'Right' if current_position > previous_position else 'Left'
 
-def update_approach_distances(approach_distances, merged_data, i, previous_direction, previous_position):
-    if previous_direction == 'Right' and previous_position > 0.5:
-        if merged_data.iloc[i-1]['RightImageType'] == 'Spider':
-            approach_distances['Spider'].append(previous_position)
-        else:
-            approach_distances['Neutral'].append(previous_position)
-    elif previous_direction == 'Left' and previous_position < 0.5:
-        if merged_data.iloc[i-1]['LeftImageType'] == 'Spider':
-            approach_distances['Spider'].append(previous_position)
-        else:
-            approach_distances['Neutral'].append(previous_position)
-
-
-
 def calculate_speed(current_position, previous_position, current_time, previous_time):
     time_diff = current_time - previous_time
     if time_diff == 0:
@@ -174,19 +117,6 @@ def determine_movement(merged_data, i, current_position, previous_position):
     direction = 'Right' if current_position > previous_position else 'Left'
     image_type = merged_data.iloc[i]['RightImageType'] if direction == 'Right' else merged_data.iloc[i]['LeftImageType']
     return direction, image_type
-
-def process_file(uploaded_file):
-    data_cleaned = load_and_clean_data(uploaded_file)
-    if data_cleaned is None:
-        return None, None
-
-    approach_distances = calculate_approach_distances(data_cleaned)
-    player_positions = extract_player_positions(data_cleaned)
-    images_data = extract_images_data(data_cleaned)
-    merged_data = merge_data(player_positions, images_data)
-    speed_df = calculate_speed_and_direction(data_cleaned, merged_data) 
-
-    return approach_distances, speed_df  # Return two DataFrames
 
 def calculate_speed_and_direction(data, merged_data):
     if merged_data is None:
@@ -212,13 +142,9 @@ def calculate_speed_and_direction(data, merged_data):
         directions.append(direction)
         image_types.append(image_type)
 
-        # Add direction to the merged_data DataFrame (in place)
         merged_data.at[i, 'Direction'] = direction
 
     return pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
-
-
-
 
 def process_file(uploaded_file):
     data_cleaned = load_and_clean_data(uploaded_file)
@@ -229,25 +155,17 @@ def process_file(uploaded_file):
     player_positions = extract_player_positions(data_cleaned)
     images_data = extract_images_data(data_cleaned)
     merged_data = merge_data(player_positions, images_data)
-    
-    # Check merged_data before proceeding
+
     if merged_data is None:
         st.error("Merged data is invalid, skipping speed calculation")
         return approach_distances, None
-    
+
     speed_df = calculate_speed_and_direction(data_cleaned, merged_data)
 
-    # Verify that Direction column exists
     if 'Direction' not in merged_data.columns:
         st.error("Direction column is missing after calculation!")
 
     return approach_distances, speed_df
-
-import streamlit as st
-import pandas as pd
-from io import StringIO
-
-# ... (Your other functions remain the same)
 
 st.title("Approach Distances and Speed Analysis")
 
@@ -255,14 +173,14 @@ with st.form("upload_form"):
     uploaded_files = st.file_uploader("Choose CSV files", accept_multiple_files=True, type="csv")
     submit_button = st.form_submit_button("Analyze Files")
 
-    if submit_button and uploaded_files:  # Check if button clicked and files uploaded
+    if submit_button and uploaded_files:
         all_approach_results = []
         all_speed_results = []
         for uploaded_file in uploaded_files:
             st.write(f"Processing file: {uploaded_file.name}")
-            approach_df, speed_df = process_file(uploaded_file)  # Unpack the returned DataFrames
+            approach_df, speed_df = process_file(uploaded_file)
 
-            if approach_df is None or speed_df is None:  
+            if approach_df is None or speed_df is None:
                 st.error(f"Failed to process file: {uploaded_file.name}")
                 continue
 
