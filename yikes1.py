@@ -194,30 +194,43 @@ def process_file(uploaded_file):
 
     return approach_distances, speed_df  # Return two DataFrames
 
-if uploaded_files:
-    all_approach_results, all_speed_results = [], []
-    for uploaded_file in uploaded_files:
-        st.write(f"Processing file: {uploaded_file.name}")
-        approach_df, speed_df = process_file(uploaded_file)
+import streamlit as st
+import pandas as pd
+from io import StringIO
 
-        if approach_df is None or speed_df is None:
-            st.error(f"Failed to process file: {uploaded_file.name}")
-            continue
+# ... (Your other functions remain the same)
 
-        st.write("Approach Distance Analysis:")
-        st.write(approach_df.groupby('ImageType').describe())
-        all_approach_results.append(approach_df)
+st.title("Approach Distances and Speed Analysis")
 
-        st.write("Speed Analysis:")
-        st.write(speed_df.groupby(['Direction', 'ImageType']).describe())
-        all_speed_results.append(speed_df)
+with st.form("upload_form"):
+    uploaded_files = st.file_uploader("Choose CSV files", accept_multiple_files=True, type="csv")
+    submit_button = st.form_submit_button("Analyze Files")
 
-    if all_approach_results and all_speed_results:
-        final_approach_df = pd.concat(all_approach_results)
-        final_speed_df = pd.concat(all_speed_results)
+    if submit_button and uploaded_files:  # Check if button clicked and files uploaded
+        all_approach_results = []
+        all_speed_results = []
+        for uploaded_file in uploaded_files:
+            st.write(f"Processing file: {uploaded_file.name}")
+            approach_df, speed_df = process_file(uploaded_file)  # Unpack the returned DataFrames
 
-        st.write("Combined Approach Distance Results:")
-        st.write(final_approach_df.groupby('ImageType').describe())
+            if approach_df is None or speed_df is None:  
+                st.error(f"Failed to process file: {uploaded_file.name}")
+                continue
 
-        st.write("Combined Speed Results:")
-        st.write(final_speed_df.groupby(['Direction', 'ImageType']).describe())
+            st.write("Approach Distance Analysis:")
+            st.write(approach_df.groupby('ImageType').describe())
+            all_approach_results.append(approach_df)
+
+            st.write("Speed Analysis:")
+            st.write(speed_df.groupby(['Direction', 'ImageType']).describe())
+            all_speed_results.append(speed_df)
+
+        if all_approach_results and all_speed_results:
+            final_approach_df = pd.concat(all_approach_results)
+            final_speed_df = pd.concat(all_speed_results)
+
+            st.write("Combined Approach Distance Results:")
+            st.write(final_approach_df.groupby('ImageType').describe())
+
+            st.write("Combined Speed Results:")
+            st.write(final_speed_df.groupby(['Direction', 'ImageType']).describe())
