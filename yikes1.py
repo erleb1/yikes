@@ -3,10 +3,13 @@ import pandas as pd
 
 def load_and_clean_data(uploaded_file):
     # Read file line by line until the correct header is found
+    uploaded_file.seek(0)
+    lines = uploaded_file.readlines()
+    
+    # Find the start line with 'Player position'
     start_line = 0
     found_header = False
-    uploaded_file.seek(0)
-    for i, line in enumerate(uploaded_file):
+    for i, line in enumerate(lines):
         if b'Player position' in line:
             start_line = i
             found_header = True
@@ -16,8 +19,14 @@ def load_and_clean_data(uploaded_file):
         st.error(f"Failed to find the header in {uploaded_file.name}. The file does not contain the expected data.")
         return None
 
+    # Read the file from the identified start line
     uploaded_file.seek(0)  # Reset file pointer to the beginning
-    data = pd.read_csv(uploaded_file, skiprows=start_line)
+    try:
+        data = pd.read_csv(uploaded_file, skiprows=start_line)
+    except pd.errors.ParserError as e:
+        st.error(f"Error parsing {uploaded_file.name}: {e}")
+        return None
+
     expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
                         'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
     
