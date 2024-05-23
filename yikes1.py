@@ -2,31 +2,46 @@ import streamlit as st
 import pandas as pd
 from io import StringIO
 
+import streamlit as st
+import pandas as pd
+from io import StringIO
+
+
+
+
 def load_and_clean_data(uploaded_file):
     try:
-        uploaded_file.seek(0)
-        lines = uploaded_file.readlines()
+        # Read the file and find the header row
+        df = pd.read_csv(uploaded_file, on_bad_lines='skip')
 
-        start_line = find_header_start(lines)
-        if start_line is None:
-            st.error(f"Failed to find the header in {uploaded_file.name}. The file does not contain the expected data.")
-            return None
+        header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
+        df = df.iloc[header_row:].copy()  # Keep only data from header row onward
 
-        valid_lines = extract_valid_lines(lines[start_line:])
-        if not valid_lines:
-            st.error(f"No valid data found in {uploaded_file.name}.")
-            return None
+        # Drop columns with all missing values (NaN)
+        df = df.dropna(axis=1, how='all')
 
-        data = create_dataframe(valid_lines)
-        if data is None:
-            return None
-
-        data_cleaned = clean_data(data)
-        return data_cleaned
-
+        # Standardize column names
+        expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
+                             'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
+        column_count = len(df.columns)  # Adjust columns based on actual data
+        df.columns = expected_columns[:column_count] 
+        
+        # Data Validation 
+        st.write("Data after cleaning:")
+        st.write(df)  
+        return df
+        
+    except IndexError:
+        st.error(f"Failed to find the header ('Player position') in {uploaded_file.name}.")
+        return None
     except Exception as e:
         st.error(f"Unexpected error while processing {uploaded_file.name}: {e}")
         return None
+
+
+
+
+
 
 def find_header_start(lines):
     for i, line in enumerate(lines):
