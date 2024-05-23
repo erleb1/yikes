@@ -14,6 +14,9 @@ def load_and_clean_data(uploaded_file):
         # Read the file and find the header row
         df = pd.read_csv(uploaded_file, on_bad_lines='skip')
 
+        # Strip leading and trailing whitespace from the first column
+        df.iloc[:, 0] = df.iloc[:, 0].astype(str).str.strip()
+
         header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
         df = df.iloc[header_row:].copy()  # Keep only data from header row onward
 
@@ -25,12 +28,12 @@ def load_and_clean_data(uploaded_file):
                              'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
         column_count = len(df.columns)  # Adjust columns based on actual data
         df.columns = expected_columns[:column_count] 
-        
+
         # Data Validation 
         st.write("Data after cleaning:")
         st.write(df)  
         return df
-        
+
     except IndexError:
         st.error(f"Failed to find the header ('Player position') in {uploaded_file.name}.")
         return None
