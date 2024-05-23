@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import csv
 from io import StringIO
 
 def load_and_clean_data(uploaded_file):
@@ -12,7 +11,7 @@ def load_and_clean_data(uploaded_file):
     start_line = 0
     found_header = False
     for i, line in enumerate(lines):
-        if b'Player position' in line:
+        if 'Player position' in line.decode('utf-8'):
             start_line = i
             found_header = True
             break
@@ -25,7 +24,7 @@ def load_and_clean_data(uploaded_file):
     valid_lines = []
     expected_fields = 3  # Set this to the minimum number of expected fields
     for line in lines[start_line:]:
-        if len(line.split(',')) >= expected_fields:
+        if len(line.decode('utf-8').split(',')) >= expected_fields:
             valid_lines.append(line.decode('utf-8'))
 
     data = pd.read_csv(StringIO(''.join(valid_lines)))
