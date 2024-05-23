@@ -95,17 +95,24 @@ def extract_images_data(data):
 
 def merge_data(player_positions, images_data):
     try:
-        if 'Detail1' not in images_data.columns:
-            st.error("The column 'Detail1' is missing from the images data.")
+        # Check if Detail1 exists before using it
+        if 'Detail1' in images_data.columns:
+            merged_data = pd.merge_asof(
+                player_positions.sort_values('TimeStamp'), 
+                images_data.sort_values('TimeStamp'),
+                on='TimeStamp', direction='backward', suffixes=('', '_image')
+            )
+            merged_data['RightImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
+            merged_data['LeftImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
+            return merged_data
+        else:
+            st.warning("The column 'Detail1' is missing from the images data in some files. These files will be excluded from the analysis.")
             return None
-        merged_data = pd.merge_asof(player_positions.sort_values('TimeStamp'), images_data.sort_values('TimeStamp'),
-                                    on='TimeStamp', direction='backward', suffixes=('', '_image'))
-        merged_data['RightImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
-        merged_data['LeftImageType'] = merged_data['Detail1'].apply(lambda x: 'Spider' if 'Spider' in str(x) else 'Neutral')
-        return merged_data
+
     except Exception as e:
         st.error(f"Error merging data: {e}")
         return None
+
 
 def determine_direction(current_position, previous_position):
     return 'Right' if current_position > previous_position else 'Left'
