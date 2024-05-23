@@ -59,26 +59,32 @@ def clean_data(data):
     return data_cleaned
 
 def calculate_approach_distances(data):
-    approach_distances = {'Spider': [], 'Neutral': []}
     player_positions = extract_player_positions(data)
     images_data = extract_images_data(data)
 
     merged_data = merge_data(player_positions, images_data)
-    if merged_data is None:
-         return approach_distances, merged_data 
+    if merged_data is None:  # Handle invalid merged_data
+        return pd.DataFrame(columns=['ImageType', 'Distance']) 
 
     previous_position, previous_direction = None, None
+    approach_data = []
+
     for i in range(1, len(merged_data)):
         current_position = merged_data.iloc[i]['Position']
         if previous_position is not None:
             direction = determine_direction(current_position, previous_position)
             if previous_direction is not None and direction != previous_direction:
-                update_approach_distances(approach_distances, merged_data, i, previous_direction, previous_position)
+                image_type = (
+                    merged_data.iloc[i - 1]['RightImageType']
+                    if previous_direction == 'Right'
+                    else merged_data.iloc[i - 1]['LeftImageType']
+                )
+                approach_data.append({'ImageType': image_type, 'Distance': previous_position})
             previous_direction = direction
         previous_position = current_position
 
-    return approach_distances
-
+    return pd.DataFrame(approach_data)  # Return a DataFrame
+    
 def extract_player_positions(data):
     player_positions = data[data['EventType'] == 'Player position']
     player_positions = player_positions[['TimeStamp', 'EventData']].rename(columns={'EventData': 'Position'})
