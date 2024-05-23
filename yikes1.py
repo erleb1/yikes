@@ -184,10 +184,13 @@ def calculate_speed_and_direction(data, merged_data):
         speeds.append(speed)
         directions.append(direction)
         image_types.append(image_type)
-        # Add direction to the merged_data DataFrame
+
+        # Add direction to the merged_data DataFrame (in place)
         merged_data.at[i, 'Direction'] = direction
 
     return pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
+
+
 
 
 def process_file(uploaded_file):
@@ -199,9 +202,19 @@ def process_file(uploaded_file):
     player_positions = extract_player_positions(data_cleaned)
     images_data = extract_images_data(data_cleaned)
     merged_data = merge_data(player_positions, images_data)
-    speed_df = calculate_speed_and_direction(data_cleaned, merged_data) 
+    
+    # Check merged_data before proceeding
+    if merged_data is None:
+        st.error("Merged data is invalid, skipping speed calculation")
+        return approach_distances, None
+    
+    speed_df = calculate_speed_and_direction(data_cleaned, merged_data)
 
-    return approach_distances, speed_df  # Return two DataFrames
+    # Verify that Direction column exists
+    if 'Direction' not in merged_data.columns:
+        st.error("Direction column is missing after calculation!")
+
+    return approach_distances, speed_df
 
 import streamlit as st
 import pandas as pd
