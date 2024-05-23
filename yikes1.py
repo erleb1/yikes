@@ -1,23 +1,27 @@
 import streamlit as st
 import pandas as pd
+import csv
 
 def load_and_clean_data(file):
-    # Attempt to load data, skip rows that do not match the expected format
     data = None
-    for i in range(10):
-        try:
-            data = pd.read_csv(file, skiprows=i)
-            if data.empty:
+    try:
+        for i in range(10):
+            try:
+                data = pd.read_csv(file, skiprows=i)
+                if data.empty:
+                    continue
+                if 'Player position' in data.columns[0]:
+                    break
+            except pd.errors.EmptyDataError:
                 continue
-            if 'Player position' in data.columns[0]:
-                break
-        except pd.errors.EmptyDataError:
-            continue
+    except Exception as e:
+        st.error(f"Failed to load data from {file.name}. Error: {e}")
+        return None
+
     if data is None or data.empty:
         st.error(f"Failed to load data from {file.name}. The file may be empty or not contain the expected data.")
         return None
 
-    # Rename columns for better understanding
     data.columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
                     'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
     data_cleaned = data.dropna(axis=1, how='all')
