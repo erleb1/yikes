@@ -1,29 +1,26 @@
 import streamlit as st
 import pandas as pd
-import csv
 
 def load_and_clean_data(file):
-    data = None
+    # Read file line by line until the correct header is found
+    start_line = 0
+    found_header = False
+    with open(file, 'r') as f:
+        for i, line in enumerate(f):
+            if 'Player position' in line:
+                start_line = i
+                found_header = True
+                break
+
+    if not found_header:
+        st.error(f"Failed to find the header in {file.name}. The file does not contain the expected data.")
+        return None
+
+    # Read the file from the identified start line
+    data = pd.read_csv(file, skiprows=start_line)
     expected_columns = ['EventType', 'TimeStamp', 'EventData', 'Detail1', 'Detail2', 'Detail3', 'Detail4', 
                         'Detail5', 'Detail6', 'Detail7', 'Detail8', 'Detail9', 'Detail10', 'Detail11']
-    try:
-        for i in range(10):
-            try:
-                data = pd.read_csv(file, skiprows=i)
-                if data.empty:
-                    continue
-                if 'Player position' in data.columns[0]:
-                    break
-            except pd.errors.EmptyDataError:
-                continue
-    except Exception as e:
-        st.error(f"Failed to load data from {file.name}. Error: {e}")
-        return None
-
-    if data is None or data.empty:
-        st.error(f"Failed to load data from {file.name}. The file may be empty or not contain the expected data.")
-        return None
-
+    
     # Dynamically adjust column renaming
     column_count = len(data.columns)
     data.columns = expected_columns[:column_count]
