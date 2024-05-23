@@ -163,7 +163,7 @@ def process_file(uploaded_file):
 
 def calculate_speed_and_direction(data, merged_data):
     if merged_data is None:
-        return pd.DataFrame()  # Return empty DataFrame if merged_data is invalid
+        return pd.DataFrame()
 
     speeds = []
     directions = []
@@ -176,16 +176,19 @@ def calculate_speed_and_direction(data, merged_data):
         previous_position = merged_data.iloc[i - 1]['Position']
 
         speed = calculate_speed(current_position, previous_position, current_time, previous_time)
-        if speed is None:  # Skip invalid speed calculations (to avoid errors later)
-            continue 
+        if speed is None:
+            continue
 
         direction, image_type = determine_movement(merged_data, i, current_position, previous_position)
 
         speeds.append(speed)
         directions.append(direction)
         image_types.append(image_type)
+        # Add direction to the merged_data DataFrame
+        merged_data.at[i, 'Direction'] = direction
 
-    return pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})  # Return a DataFrame
+    return pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
+
 
 def process_file(uploaded_file):
     data_cleaned = load_and_clean_data(uploaded_file)
