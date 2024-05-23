@@ -130,29 +130,27 @@ def update_approach_distances(approach_distances, merged_data, i, previous_direc
             approach_distances['Neutral'].append(previous_position)
 
 def calculate_speed_and_direction(data):
-    speeds, directions, image_types = [], [], []
-    player_positions = extract_player_positions(data)
-    images_data = extract_images_data(data)
-
-    merged_data = merge_data(player_positions, images_data)
-    if merged_data is None:
-        return pd.DataFrame()
+    # ... (rest of the code is the same)
 
     for i in range(1, len(merged_data)):
-        current_time, previous_time = merged_data.iloc[i]['TimeStamp'], merged_data.iloc[i-1]['TimeStamp']
-        current_position, previous_position = merged_data.iloc[i]['Position'], merged_data.iloc[i-1]['Position']
+        # ... (calculations for current_time, previous_time, current_position, previous_position)
 
         speed = calculate_speed(current_position, previous_position, current_time, previous_time)
+        
+        # Skip rows with invalid speed calculations
         if speed is None:
-            continue
+            continue 
 
         direction, image_type = determine_movement(merged_data, i, current_position, previous_position)
+        
+        # Only append if speed is valid
         speeds.append(speed)
         directions.append(direction)
         image_types.append(image_type)
 
     results = pd.DataFrame({'Speed': speeds, 'Direction': directions, 'ImageType': image_types})
     return results
+
 
 def calculate_speed(current_position, previous_position, current_time, previous_time):
     time_diff = current_time - previous_time
