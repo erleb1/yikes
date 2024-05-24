@@ -1,17 +1,23 @@
 import streamlit as st
 import pandas as pd
 from io import StringIO
+import re
+
+def clean_raw_data(rawdata):
+    # Remove non-printable characters
+    cleaned_data = re.sub(b'[\x00-\x1F\x7F-\x9F]', b'', rawdata)
+    # Normalize line endings to '\n'
+    cleaned_data = cleaned_data.replace(b'\r\n', b'\n').replace(b'\r', b'\n')
+    return cleaned_data
 
 def load_and_clean_data(uploaded_file):
-    try:
-        rawdata = uploaded_file.read()
-        decoded_data = rawdata.decode('utf-8')
-        df = pd.read_csv(StringIO(decoded_data), on_bad_lines='skip')
-
-        # Find the header row
-        if 'Player position' in df.iloc[:, 0].values:
-            header_row = df[df.iloc[:, 0] == 'Player position'].index[0]
-            df = df.iloc[header_row:].copy()  # Keep only data from header row onward
+    encodings = ['utf-8', 'latin1', 'iso-8859-1', 'cp1252', 'cp1251']
+    for encoding in encodings:
+        try:
+            rawdata = uploaded_file.read()
+            cleaned_data = clean_raw_data(rawdata)
+            decoded_data = cleaned_data.decode(encoding)
+            df = pd.read_csv(StringIO(decoded_data), on_bad_lines='skip')
 
             # Drop columns with all missing values (NaN)
             df = df.dropna(axis=1, how='all')
@@ -26,13 +32,10 @@ def load_and_clean_data(uploaded_file):
             st.write("Data after cleaning:")
             st.write(df)
             return df
-        else:
-            st.warning(f"'Player position' not found in the first column")
+        except (UnicodeDecodeError, pd.errors.EmptyDataError, IndexError) as e:
+            st.warning(f"Trying next encoding due to error: {e}")
 
-    except (UnicodeDecodeError, pd.errors.EmptyDataError, IndexError) as e:
-        st.error(f"Error processing file {uploaded_file.name}: {e}")
-
-    st.error(f"Failed to decode file {uploaded_file.name}.")
+    st.error(f"Failed to decode file {uploaded_file.name} with common encodings.")
     return None
     
 def calculate_approach_distances(data):
